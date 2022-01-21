@@ -163,6 +163,31 @@ func flattenHiddenFieldView(in *models.HiddenFieldView) []map[string]interface{}
 	return m
 }
 
+func expandAdminWebSessionOidcConfigurationView(in []interface{}) *models.AdminWebSessionOidcConfigurationView {
+
+	view := &models.AdminWebSessionOidcConfigurationView{}
+	for _, raw := range in {
+
+		switch raw.(type) {
+		case nil:
+			fmt.Println("nil Pointer")
+		case []interface{}:
+			l := raw.(map[string][]interface{})
+			fmt.Println(l)
+			if val, ok := l["client_credentials"]; ok {
+				view.ClientCredentials = expandOAuthClientCredentialsView(val)
+			}
+		case interface{}:
+			l := raw.(map[string]interface{})
+			if val, ok := l["cache_user_attributes"]; ok {
+				view.CacheUserAttributes = Bool(val.(bool))
+			}
+		}
+	}
+	return view
+
+}
+
 func expandOAuthClientCredentialsView(in []interface{}) *models.OAuthClientCredentialsView {
 	hf := &models.OAuthClientCredentialsView{}
 	for _, raw := range in {

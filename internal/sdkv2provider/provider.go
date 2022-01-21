@@ -73,6 +73,7 @@ func Provider() *schema.Provider {
 			"pingaccess_pingfederate_oauth":              resourcePingAccessPingFederateOAuth(),
 			"pingaccess_oauth_server":                    resourcePingAccessOAuthServer(),
 			"pingaccess_http_config_request_host_source": resourcePingAccessHTTPConfigRequestHostSource(),
+			"pingaccess_auth_oidc":                       resourcePingAccessAuthOidc(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
