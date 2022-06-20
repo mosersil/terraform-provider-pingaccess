@@ -195,7 +195,7 @@ func expandOAuthClientCredentialsView(in []interface{}) *models.OAuthClientCrede
 		if val, ok := l["client_id"]; ok {
 			hf.ClientId = String(val.(string))
 		}
-		if val, ok := l["client_secret"]; ok {
+		if val, ok := l["client_secret"]; ok && len(val.([]interface{})) > 0 {
 			hf.ClientSecret = expandHiddenFieldView(val.([]interface{}))
 		}
 		if val, ok := l["credentials_type"]; ok {
@@ -561,6 +561,7 @@ func hashString(s string) int {
 func setClientCredentials(d *schema.ResourceData, input *models.OAuthClientCredentialsView, trackPasswords bool, diags *diag.Diagnostics) {
 	pw, ok := d.GetOk("client_credentials.0.client_secret.0.value")
 	creds := flattenOAuthClientCredentialsView(input)
+
 	if input.KeyPairId != nil {
 		creds[0]["key_pair_id"] = *input.KeyPairId
 	}
@@ -570,7 +571,7 @@ func setClientCredentials(d *schema.ResourceData, input *models.OAuthClientCrede
 		//set the resource state default
 		creds[0]["credentials_type"] = "SECRET"
 	}
-	if trackPasswords {
+	if _, hasClientSecret := creds[0]["client_secret"]; hasClientSecret && trackPasswords {
 		enc, encOk := d.GetOk("client_credentials.0.client_secret.0.encrypted_value")
 		creds[0]["client_secret"].([]map[string]interface{})[0]["value"] = pw
 		if err := d.Set("client_credentials", creds); err != nil {
@@ -588,4 +589,66 @@ func setClientCredentials(d *schema.ResourceData, input *models.OAuthClientCrede
 	if err := d.Set("client_credentials", creds); err != nil {
 		*diags = append(*diags, diag.FromErr(err)...)
 	}
+}
+
+func expandResourceTypeConfiguration(in []interface{}) *models.ResourceTypeConfigurationView {
+	rtcv := &models.ResourceTypeConfigurationView{}
+
+	for _, raw := range in {
+		l := raw.(map[string]interface{})
+		if val, ok := l["response_generator"]; ok {
+			rtcv.ResponseGenerator = expandResponseGenerator(val.([]interface{}))
+		}
+	}
+
+	return rtcv
+}
+
+func expandResponseGenerator(in []interface{}) *models.ResponseGeneratorView {
+	rg := &models.ResponseGeneratorView{}
+	for _, raw := range in {
+		if raw == nil {
+			return rg
+		}
+		l := raw.(map[string]interface{})
+		if val, ok := l["class_name"]; ok {
+			rg.ClassName = String(val.(string))
+		}
+		if val, ok := l["configuration"]; ok {
+			config := val.(string)
+			var dat map[string]interface{}
+			_ = json.Unmarshal([]byte(config), &dat)
+			rg.Configuration = dat
+		}
+	}
+
+	return rg
+}
+
+func flattenResourceTypeConfiguration(in *models.ResourceTypeConfigurationView) []interface{} {
+	var m []interface{}
+
+	s := make(map[string]interface{})
+	if in.ResponseGenerator != nil {
+		s["response_generator"] = flattenResponseGenerator(in.ResponseGenerator)
+		m = append(m, s)
+	}
+
+	return m
+}
+
+func flattenResponseGenerator(in *models.ResponseGeneratorView) []interface{} {
+	var m []interface{}
+	s := make(map[string]interface{})
+	if in.ClassName != nil {
+		s["class_name"] = *in.ClassName
+	}
+
+	if in.Configuration != nil {
+		b, _ := json.Marshal(in.Configuration)
+		s["configuration"] = String(string(b))
+	}
+	m = append(m, s)
+
+	return m
 }

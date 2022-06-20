@@ -1,6 +1,6 @@
 # Makefile
 NAME=terraform-provider-pingaccess
-PINGACCESS_VERSION ?= 7.0.2-edge
+PINGACCESS_VERSION ?= 7.0.3-edge
 BASE_DOCKER_TAG=pingidentity/pingaccess:${PINGACCESS_VERSION}
 OS_NAME := $(shell uname -s | tr A-Z a-z)
 CURDATE := ${shell date +'%y%m%d'}
@@ -39,7 +39,7 @@ test-and-report:
 	@TF_ACC=1 go test -mod=vendor ./... -v -trimpath -coverprofile=coverage.out -json | tee report.json
 
 build:
-	@go build -mod=vendor -o ${NAME} -trimpath .
+	@go install -mod=vendor -trimpath .
 
 func-init:
 	@rm -rf func-tests/.terraform
